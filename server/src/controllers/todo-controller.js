@@ -1,0 +1,85 @@
+const Todo = require("../models/todo-model");
+
+createItem = (req, res) => {
+  const body = req.body;
+  if (!body) {
+    return res.status(400).json({
+      success: false,
+      error: "You must provide an item",
+    });
+  }
+
+  const todo = new Todo(body);
+
+  if (!todo) {
+    return res.status(400).json({ success: false, error: err });
+  }
+
+  todo
+    .save()
+    .then(() => {
+      return res.status(200).json({
+        success: true,
+        id: todo._id,
+        message: "todo item created",
+      });
+    })
+    .catch((error) => {
+      return res.status(400).json({
+        error,
+        message: "todo item not created",
+      });
+    });
+};
+
+getTodos = async (req, res) => {
+  await Todo.find({}, (err, todos) => {
+    if (err) {
+      return res.status(400).json({ success: false, error: err });
+    }
+    if (!todos.length) {
+      return res.status(404).json({ success: false, error: `Item not found` });
+    }
+    return res.status(200).json({ success: true, data: todos });
+  })
+    .clone()
+    .catch((err) => console.log(err));
+};
+
+updateTodo = async (req, res) => {
+  console.log(req.params);
+  const body = req.body;
+  if (!body) {
+    return res.status(400).json({
+      success: false,
+      error: "You must provide a body to update",
+    });
+  } else {
+    Todo.findOneAndUpdate(
+      { _id: req.params.id },
+      { $set: req.body },
+      { new: true },
+      (err, todo) => {
+        if (err) {
+          return res.status(400).json({ success: false, error: err });
+        }
+        return res.status(200).json({ success: true, data: todo });
+      }
+    )
+      .clone()
+      .catch((err) => console.log(err));
+  }
+};
+
+deleteTodo = async (req, res) => {
+  await Todo.findOneAndDelete({ _id: req.params.id }, (err, todo) => {
+    if (err) {
+      return res.status(400).json({ success: false, error: err });
+    }
+    return res.status(200).json({ success: true, data: todo });
+  })
+    .clone()
+    .catch((err) => console.log(err));
+};
+
+module.exports = { createItem, getTodos, updateTodo, deleteTodo };
